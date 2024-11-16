@@ -23,7 +23,10 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-cred = credentials.Certificate("firebase_key.json")
+if ENV == "development":
+    cred = credentials.Certificate("firebase_key.json")
+else:
+    cred = credentials.Certificate("/etc/secrets/firebase_key.json")
 firebase_admin.initialize_app(cred)
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")

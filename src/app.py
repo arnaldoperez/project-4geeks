@@ -6,10 +6,14 @@ from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db
+from flask_jwt_extended import JWTManager
+from api.models import db, TokenBlockedList
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
+import firebase_admin
+from firebase_admin import credentials
+
 
 # from models import Person
 
@@ -18,6 +22,24 @@ static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+
+cred = credentials.Certificate("firebase_key.json")
+firebase_admin.initialize_app(cred)
+
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
+jwt = JWTManager(app)
+
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
+    # 1ra condicion: El token es de password
+    is_password = jwt_payload["type"] == "password" and request.path != "/api/changepassword"
+    if is_password:
+        return True
+    # 2da condicion: El token es valido
+    jti = jwt_payload["jti"]
+    token = TokenBlockedList.query.filter_by(jti=jti).first()
+    is_blocked = token is not None
+    return is_blocked
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")

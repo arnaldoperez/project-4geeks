@@ -4,7 +4,7 @@
 services:
     - type: web # valid values: https://render.com/docs/yaml-spec#type
       region: ohio
-      name: sample-service-name
+      name: 4geeks-project
       env: python # valid values: https://render.com/docs/yaml-spec#environment
       buildCommand: "./render_build.sh"
       startCommand: "gunicorn wsgi --chdir ./src/"
@@ -32,9 +32,15 @@ services:
           - key: MAIL_USER_ID
             sync: false
           - key: BACKEND_URL
-            value: "https://redesigned-capybara-jrq6vxqwwqcp9wx-3001.app.github.dev/api"
+            fromService: 4geeks-project
+            type: web
+            property: host
+            #value: "https://redesigned-capybara-jrq6vxqwwqcp9wx-3001.app.github.dev/api"
           - key: FRONTEND_URL
-            value: "https://redesigned-capybara-jrq6vxqwwqcp9wx-3000.app.github.dev"
+            fromService: 4geeks-project
+            type: web
+            property: host
+            #value: "https://redesigned-capybara-jrq6vxqwwqcp9wx-3000.app.github.dev"
           - key: DATABASE_URL # Render PostgreSQL database
             fromDatabase:
                 name: postgresql-trapezoidal-42170

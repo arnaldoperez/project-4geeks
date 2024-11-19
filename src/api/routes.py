@@ -8,13 +8,10 @@ from api.models import db, User, TokenBlockedList
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
-from tempfile import NamedTemporaryFile
 from datetime import timedelta
 import os
 import requests
 import json
-from tempfile import  NamedTemporaryFile
-from firebase_admin import storage
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -196,7 +193,7 @@ def user_change_password():
   db.session.commit()
 
   return jsonify({"msg":"Password updated"})
-  
+  """ 
 
 @api.route("/profilepic", methods=["PATCH"])
 @jwt_required()
@@ -234,4 +231,4 @@ def user_profile_picture_get():
   bucket=storage.bucket(name="clase-imagenes-flask.appspot.com")
   resource=bucket.blob(user.profile_pic)
   picture_url=resource.generate_signed_url(version="v4",expiration=timedelta(minutes=15),method="GET")
-  return jsonify({"url":picture_url})
+  return jsonify({"url":picture_url}) """

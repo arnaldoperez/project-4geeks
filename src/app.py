@@ -11,8 +11,6 @@ from api.models import db, TokenBlockedList
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
-import firebase_admin
-from firebase_admin import credentials
 
 
 # from models import Person
@@ -23,11 +21,6 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-if ENV == "development":
-    cred = credentials.Certificate("firebase_key.json")
-else:
-    cred = credentials.Certificate("/etc/secrets/firebase_key.json")
-firebase_admin.initialize_app(cred)
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
 jwt = JWTManager(app)
@@ -74,7 +67,8 @@ def handle_invalid_usage(error):
 
 # generate sitemap with all your endpoints
 
-
+print(os.getenv("FLASK_DEBUG"))
+print(ENV)
 @app.route('/')
 def sitemap():
     if ENV == "development":

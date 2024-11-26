@@ -14,7 +14,8 @@ const getState = ({ getStore, getActions, setStore }) => {
           background: "white",
           initial: "white"
         }
-      ]
+      ],
+      fetching: false
     },
     actions: {
       // Use getActions to call a function within a fuction
@@ -107,20 +108,50 @@ const getState = ({ getStore, getActions, setStore }) => {
         return true
       },
       getProfilePic: async () => {
-        let { token } = getStore()
-        const resp = await fetch(backendUrl + "/profilepic", {
-          method: "GET",
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Authorization": "Bearer " + token
-          },
-        })
-        if (!resp.ok) {
-          console.error(resp.statusText)
-          return false
-        }
-        let { url } = await resp.json()
+        let { apiFetchProtected } = getActions()
+        let { url } = await apiFetchProtected("/profilepic")
         setStore({ profilePicture: url })
+      },
+
+
+      apiFetchProtected: async (endpoint, method = "GET", body = null) => {
+        setStore({ fetching: true })
+        try {
+          let { token } = getStore()
+          let params = {
+            method,
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Authorization": "Bearer " + token
+            },
+          }
+          if (body) {
+            params.body = JSON.stringify(body)
+            params.headers["Content-Type"] = "application/json"
+          }
+          const resp = await fetch(backendUrl + endpoint, params)
+          if (!resp.ok) {
+            console.error(resp.statusText)
+            return null
+          }
+          return await resp.json()
+        } catch (error) {
+          console.error(error)
+          return null
+        } finally {
+          setStore({ fetching: false })
+        }
+      },
+
+      logout: async () => {
+        const { apiFetchProtected } = getActions()
+        const resp = await apiFetchProtected("/logout", "POST")
+        if (!resp) {
+          console.error("No se pudo cerrar sesion")
+          return
+        }
+        setStore({ token: undefined })
+        localStorage.removeItem("token")
       }
     }
   };

@@ -13,7 +13,7 @@ export const Home = () => {
       {store.token ?
         <>
           <UploadPicture />
-          {store.profilePicture ? <img src={store.profilePicture} class="img-fluid" alt="..." /> : ""}
+          {store.profilePicture ? <img src={store.profilePicture} className="img-fluid" alt="..." /> : ""}
         </>
         :
         <Login />

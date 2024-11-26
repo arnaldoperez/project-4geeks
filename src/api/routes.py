@@ -12,6 +12,11 @@ from datetime import timedelta
 import os
 import requests
 import json
+from tempfile import  NamedTemporaryFile
+#from firebase_admin import storage
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
+import cloudinary.api
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -47,13 +52,12 @@ def user_login():
     # 3.1 Si no se verifica se retorna un error de clave inválida 401
     if password_checked == False:
         return jsonify({"msg": "Clave invalida"}), 401
-
     # 4 Generar el token
     role = "admin"
     if user.id % 2 == 0:
         role = "user"
     token = create_access_token(
-        identity=user.id, additional_claims={"role": role})
+        identity=str(user.id), additional_claims={"role": role})
     output = {"token": token}
 
     return jsonify(output), 200
@@ -68,30 +72,89 @@ def user_info():
     payload = get_jwt()
     return jsonify({"user": user.id, "role": payload["role"]})
 
-""" 
+
 @api.route("/profilepic", methods=["PUT"])
 @jwt_required()
 def user_picture():
-    user_id = get_jwt_identity()
-    user = User.query.filter_by(id=user_id).first()
-    if user is None:
-        return jsonify({"msg": "User not found"}), 404
-    # Recibo el archivo
-    file = request.files["profilePic"]
-    extension = file.filename.split(".")[1]
-    # Guardo el archivo de la peticion en un archivo temporal
-    temp = NamedTemporaryFile(delete=False)
-    file.save(temp.name)
-    # Subir el archivo a Firebase
-    bucket = storage.bucket()
-    filename = "usersPictures/" + str(user_id) + "." + extension
-    resource = bucket.blob(filename)
-    resource.upload_from_filename(temp.name, content_type="image/" + extension)
-    user.profile_pic = filename
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({"msg": "Picture updated", "profilePicture": user.getProfilePicture()})
- """
+    try:
+      user_id = get_jwt_identity()
+      user = User.query.filter_by(id=user_id).first()
+      if user is None:
+          return jsonify({"msg": "User not found"}), 404
+      # Recibo el archivo
+      file = request.files["profilePic"]
+      extension = file.filename.split(".")[1]
+      # Guardo el archivo de la peticion en un archivo temporal
+      temp = NamedTemporaryFile(delete=False)
+      file.save(temp.name)
+      filename = "usersPictures/" + str(user_id) + "." + extension
+      # Subir el archivo a Cloudinary
+      upload_result=cloudinary.uploader.upload(temp.name,public_id=filename,asset_folder="userPictures")
+      # Despues de subir el archivo se guarda la referencia en la base de datos
+      print(upload_result)
+      asset_id=upload_result["public_id"]
+      user.profile_pic = asset_id
+      db.session.add(user)
+      db.session.commit()
+      return jsonify({"msg": "Picture updated"})
+    except Exception as ex:
+      print(ex)
+      return json({"msg":"Error al subir la foto de perfil"})#, "profilePicture": user.getProfilePicture()
+    
+""" @api.route("/profilepic", methods=["PUT"])
+@jwt_required()
+def user_picture():
+    try:
+      user_id = get_jwt_identity()
+      user = User.query.filter_by(id=user_id).first()
+      if user is None:
+          return jsonify({"msg": "User not found"}), 404
+      # Recibo el archivo
+      file = request.files["profilePic"]
+      extension = file.filename.split(".")[1]
+      # Guardo el archivo de la peticion en un archivo temporal
+      temp = NamedTemporaryFile(delete=False)
+      file.save(temp.name)
+      filename = "usersPictures/" + str(user_id) + "." + extension
+      # Subir el archivo a Firebase
+      bucket = storage.bucket()
+      resource = bucket.blob(filename)
+      resource.upload_from_filename(temp.name, content_type="image/" + extension)
+      # Despues de subir el archivo se guarda la referencia en la base de datos
+      user.profile_pic = filename
+      db.session.add(user)
+      db.session.commit()
+      return jsonify({"msg": "Picture updated", "profilePicture": user.getProfilePicture()})
+    except Exception as ex:
+      print(ex)
+      return json({"msg":"Error al subir la foto de perfil"}) """
+
+
+@api.route("/profilepic", methods=["GET"])
+@jwt_required()
+def user_profile_picture_get():
+  user_id=get_jwt_identity()
+  user=User.query.get(user_id)
+  if user is None:
+      return jsonify({"msg": "Usuario no encontrado"}), 404
+  print(user.profile_pic)
+  image_info=cloudinary.api.resource(user.profile_pic)
+  print(image_info)
+
+  return jsonify({"url":image_info["secure_url"]})
+
+""" @api.route("/profilepic", methods=["GET"])
+@jwt_required()
+def user_profile_picture_get():
+  user_id=get_jwt_identity()
+  user=User.query.get(user_id)
+  if user is None:
+      return jsonify({"msg": "Usuario no encontrado"}), 404
+  
+  bucket=storage.bucket(name="clase-imagenes-flask.appspot.com")
+  resource=bucket.blob(user.profile_pic)
+  picture_url=resource.generate_signed_url(version="v4",expiration=timedelta(minutes=15),method="GET")
+  return jsonify({"url":picture_url}) """
 
 @api.route("/userinfoadmin", methods=['GET'])
 @jwt_required()
@@ -219,16 +282,4 @@ def user_profile_picture():
   db.session.commit()
 
   return jsonify({"msg":"Foto actualizada"})
-
-@api.route("/profilepic", methods=["GET"])
-@jwt_required()
-def user_profile_picture_get():
-  user_id=get_jwt_identity()
-  user=User.query.get(user_id)
-  if user is None:
-      return jsonify({"msg": "Usuario no encontrado"}), 404
-  
-  bucket=storage.bucket(name="clase-imagenes-flask.appspot.com")
-  resource=bucket.blob(user.profile_pic)
-  picture_url=resource.generate_signed_url(version="v4",expiration=timedelta(minutes=15),method="GET")
-  return jsonify({"url":picture_url}) """
+"""

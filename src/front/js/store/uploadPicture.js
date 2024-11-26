@@ -30,10 +30,10 @@ const UploadPicture = () => {
         <div className="spinner-border ms-auto" style={{ "width": "3rem", "height": "3rem" }} aria-hidden="true"></div>
       </div> :
       <form onSubmit={submitForm}>
-        <div class="mb-3">
-          <label for="formFile" class="form-label">Default file input example</label>
-          <input class="form-control" name="profilePicture" type="file" id="formFile" />
-          <input class="form-control" name="name" type="text" id="formFile" />
+        <div className="mb-3">
+          <label htmlFor="formFile" className="form-label">Default file input example</label>
+          <input className="form-control" name="profilePicture" type="file" id="formFile" />
+          <input className="form-control" name="name" type="text" id="formFile" />
         </div>
         <button type="submit" className="btn btn-primary">Submit</button>
       </form>}

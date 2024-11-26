@@ -11,6 +11,9 @@ from api.models import db, TokenBlockedList
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
+import cloudinary
+""" import firebase_admin
+from firebase_admin import credentials """
 
 
 # from models import Person
@@ -21,6 +24,18 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
+cloudinary.config( 
+    cloud_name =os.getenv("CLOUDINARY_CLOUD") , 
+    api_key =os.getenv("CLOUDINARY_KEY") , 
+    api_secret =os.getenv("CLOUDINARY_SECRET") , # Click 'View API Keys' above to copy your API secret
+    secure=True
+)
+
+""" if ENV == "development":
+    cred = credentials.Certificate("firebase_key.json")
+else:
+    cred = credentials.Certificate("/etc/secrets/firebase_key.json")
+firebase_admin.initialize_app(cred) """
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET")
 jwt = JWTManager(app)

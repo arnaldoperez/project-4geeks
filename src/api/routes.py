@@ -62,7 +62,6 @@ def user_login():
 
     return jsonify(output), 200
 
-
 @api.route("/userinfo", methods=['GET'])
 @jwt_required()
 def user_info():
@@ -71,7 +70,6 @@ def user_info():
         return jsonify({"msg": "User not foud"}), 404
     payload = get_jwt()
     return jsonify({"user": user.id, "role": payload["role"]})
-
 
 @api.route("/profilepic", methods=["PUT"])
 @jwt_required()
@@ -128,7 +126,6 @@ def user_picture():
     except Exception as ex:
       print(ex)
       return json({"msg":"Error al subir la foto de perfil"}) """
-
 
 @api.route("/profilepic", methods=["GET"])
 @jwt_required()
@@ -225,7 +222,6 @@ def user_signup():
     db.session.commit()
     return jsonify({"msg":"Usuario creado", "user":user.serialize()})
 
-
 @api.route("/logout", methods=["POST"])
 @jwt_required()
 def user_logout():
@@ -234,7 +230,6 @@ def user_logout():
    db.session.add(token_blocked)
    db.session.commit()
    return jsonify({"msg":"Session cerrada"})
-
 
 @api.route("/changepassword", methods=["PATCH"])
 @jwt_required()
@@ -256,8 +251,8 @@ def user_change_password():
   db.session.commit()
 
   return jsonify({"msg":"Password updated"})
-  """ 
 
+  """ 
 @api.route("/profilepic", methods=["PATCH"])
 @jwt_required()
 def user_profile_picture():
